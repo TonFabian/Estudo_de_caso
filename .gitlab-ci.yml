@@ -43,22 +43,20 @@ dast:
   stage: dast
   image: zaproxy/zap-stable:2.15.0
   services:
-    - docker:dind
+    - name: docker:dind
+      command: ["--host=unix:///var/run/docker.sock"]
+  variables:
+    DOCKER_DRIVER: overlay2
+    DOCKER_HOST: tcp://docker:2375/
   script:
-    - docker run -d --name my-app -p 5000:5000 $DOCKER_REGISTRY/$IMAGE_NAME:$CI_PIPELINE_ID  # Inicia sua aplicação
+    - docker run -d --name my-app -p 5000:5000 $DOCKER_REGISTRY/$IMAGE_NAME:$CI_PIPELINE_ID
     - docker run -d --name zap -p 8080:8080 zaproxy/zap-stable:2.15.0 zap.sh -daemon -host 0.0.0.0 -port 8080
-    - sleep 30  # Aguarda a aplicação e o ZAP estarem prontos
-    - docker exec zap zap-cli quick-scan -t http://localhost:5000 -r zap_report.html || true  # Ignora erros e continua a pipeline
+    - sleep 30
+    - docker exec zap zap-cli quick-scan -t http://localhost:5000 -r zap_report.html || true
   artifacts:
     paths:
       - zap_report.html
     expire_in: 1 week
-
-deploy:
-  stage: deploy
-  script:
-    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $DOCKER_REGISTRY
-    - docker push $DOCKER_REGISTRY/$IMAGE_NAME:$CI_PIPELINE_ID
 
 monitor:
   stage: monitor
@@ -69,5 +67,5 @@ monitor:
         "type": "loki",
         "url": "'"$LOKI_URL"'",
         "access": "proxy"
-      }' http://"$GRAFANA_USER":"$GRAFANA_PASSWORD"@"$GRAFANA_URL"/api/datasources || true  # Ignora erros e continua a pipeline
+      }' http://"$GRAFANA_USER":"$GRAFANA_PASSWORD"@"$GRAFANA_URL"/api/datasources || true
 
