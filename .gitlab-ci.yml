@@ -5,81 +5,56 @@ stages:
   - dast
   - monitor
 
-# Etapa de build
 build:
   stage: build
   script:
     - echo "Construindo o projeto..."
     - docker build -t my-app .
 
-# Etapa de teste
 test:
   stage: test
   script:
     - echo "Executando testes..."
-    - docker run --rm my-app pytest || true  # Ignora erros e continua a pipeline
+    - docker run --rm my-app pytest
 
-# Análise Estática de Código com Bandit
 bandit:
   stage: security
   image: pyupio/bandit
   script:
-    - bandit -r todo_project -f json -o bandit_report.json || true  # Ignora erros e continua a pipeline
+    - bandit -r todo_project -f json -o bandit_report.json
   artifacts:
     paths:
       - bandit_report.json
     expire_in: 1 week
 
-# Análise de Dependências com OWASP Dependency-Check
 dependency-check:
   stage: security
   image: owasp/dependency-check
   script:
-    - dependency-check.sh --project "TaskManager" --outdir ./dependency-check-report --scan . --format "ALL" || true  # Ignora erros e continua a pipeline
+    - dependency-check.sh --project "TaskManager" --outdir ./dependency-check-report --scan . --format "ALL"
   artifacts:
     paths:
       - dependency-check-report/
     expire_in: 1 week
 
-# Análise Dinâmica de Segurança com OWASP ZAP
 dast:
   stage: dast
   image: zaproxy/zap-stable:2.15.0
   services:
     - docker:dind
   script:
-    - docker run -d --name my-app -p 5000:5000 my-app # Inicia sua aplicação
+    - docker run -d --name my-app -p 5000:5000 my-app
     - docker run -d --name zap -p 8080:8080 zaproxy/zap-stable:2.15.0 zap.sh -daemon -host 0.0.0.0 -port 8080
-    - sleep 30 # Aguarda a aplicação e o ZAP estarem prontos
-    - docker exec zap zap-cli quick-scan -t http://localhost:5000 -r zap_report.html || true  # Ignora erros e continua a pipeline
+    - sleep 30
+    - docker exec zap zap-cli quick-scan -t http://localhost:5000 -r zap_report.html
   artifacts:
     paths:
       - zap_report.html
     expire_in: 1 week
 
-# Monitoramento com Grafana e Loki
 monitor:
   stage: monitor
   script:
-    # Instalação e execução do Loki
-    - curl -LO https://github.com/grafana/loki/releases/latest/download/loki-linux-amd64.zip
-    - unzip loki-linux-amd64.zip
-    - mv loki-linux-amd64 /usr/local/bin/loki
-    - loki -config.file=/path/to/loki-config.yaml &  # Adapte o caminho do arquivo de configuração
-    - sleep 10  # Aguarda o Loki inicializar
-
-    # Instalação e execução do Grafana
-    - curl -LO https://github.com/grafana/grafana/releases/latest/download/grafana-<version>.linux-amd64.tar.gz
-    - tar -zxvf grafana-<version>.linux-amd64.tar.gz
-    - mv grafana-<version> /opt/grafana
-    - /opt/grafana/bin/grafana-server web &
-    - sleep 30  # Aguarda o Grafana inicializar
-
-    # Configuração do Grafana para se conectar ao Loki
-    - curl -X POST -H "Content-Type: application/json" -d '{
-        "name": "Loki",
-        "type": "loki",
-        "url": "http://localhost:3100",
-        "access": "proxy"
-      }' http://admin:admin@localhost:3000/api/datasources || true  # Ignora erros e continua a pipeline
+    - echo "Configurando monitoramento com Grafana e Loki"
+    # Adicione o script de instalação do Loki e Grafana aqui
 
