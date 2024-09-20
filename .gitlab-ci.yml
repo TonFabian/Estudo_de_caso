@@ -1,4 +1,4 @@
-image: docker:latest
+image: docker:latest  # A imagem base para o job
 
 stages:
   - build
@@ -17,9 +17,14 @@ variables:
   GRAFANA_PASSWORD: admin
   LOKI_URL: http://localhost:3100
   DOCKER_DRIVER: overlay2
+  DOCKER_HOST: tcp://docker:2375  # Definir como o Docker se comunica
+  DOCKER_TLS_CERTDIR: ""  # Desativar o uso de certificados TLS para a comunicação
+
+services:
+  - docker:dind  # Ativar Docker-in-Docker como serviço
 
 before_script:
-  - docker info
+  - docker info  # Verificar se o Docker está configurado corretamente
 
 build:
   stage: build
@@ -45,21 +50,15 @@ security:
 
 dast:
   stage: dast
-  image: docker:latest
-  services:
-    - docker:dind
-  variables:
-    DOCKER_HOST: tcp://docker:2375/
-    DOCKER_TLS_CERTDIR: ""
   script:
     - docker run -d --name my-app -p 5000:5000 $DOCKER_REGISTRY/$IMAGE_NAME:$CI_PIPELINE_ID
     - docker run -d --name zap -p 8080:8080 owasp/zap2docker-stable zap.sh -daemon -host 0.0.0.0 -port 8080
     - echo "Aguardando o ZAP inicializar..."
-    - sleep 60  # Aumentar o tempo de espera para garantir que o ZAP esteja pronto
-    - docker exec zap zap-cli quick-scan -t http://localhost:5000 -r zap_report.html || true
+    - sleep 60  # Aguardar a inicialização completa do ZAP
+    - docker exec zap zap-cli quick-scan -t http://localhost:5000 -r zap_report.html || true  # Executar o scan de segurança
   artifacts:
     paths:
-      - zap_report.html
+      - zap_report.html  # Salvar o relatório como artefato
     expire_in: 1 week
 
 deploy:
@@ -78,3 +77,4 @@ monitor:
         "url": "'"$LOKI_URL"'",
         "access": "proxy"
       }' http://"$GRAFANA_USER":"$GRAFANA_PASSWORD"@"$GRAFANA_URL"/api/datasources || echo "Falha ao configurar Loki no Grafana"
+
