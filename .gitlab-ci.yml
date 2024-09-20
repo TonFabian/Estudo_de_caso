@@ -20,7 +20,7 @@ before_script:
 build:
   stage: build
   script:
-    - echo "Build stage: no specific build steps needed for Python"
+    - echo "Build stage: no specific build steps needed for Python"  # Comando de placeholder
 
 test:
   stage: test
@@ -63,3 +63,4 @@ monitor:
         "url": "'"$LOKI_URL"'",
         "access": "proxy"
       }' http://"$GRAFANA_USER":"$GRAFANA_PASSWORD"@"$GRAFANA_URL"/api/datasources || echo "Falha ao configurar Loki no Grafana"
+
