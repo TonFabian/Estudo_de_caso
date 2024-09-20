@@ -33,19 +33,25 @@ build:
 
 test:
   stage: test
+  image: $DOCKER_REGISTRY/$IMAGE_NAME:$CI_PIPELINE_ID  # Usar a imagem construída
   script:
-    - pytest
+    - pip install -r requirements.txt  # Instalar dependências
+    - pytest  # Executar testes
 
 lint:
   stage: lint
+  image: python:3.9-slim  # Usar imagem leve do Python para lint
   script:
-    - flake8  # Exemplo de ferramenta de lint para Python
-    - isort  # Para organizar as importações
+    - pip install flake8 isort  # Instalar ferramentas de lint
+    - flake8 .  # Executar flake8
+    - isort . --check-only  # Verificar importações
 
 security:
   stage: security
+  image: python:3.9-slim  # Usar imagem leve do Python para análise de segurança
   script:
-    - bandit -r . -f json -o bandit_report.json
+    - pip install bandit  # Instalar Bandit
+    - bandit -r . -f json -o bandit_report.json  # Executar Bandit
     - dependency-check.sh --project "my-project" --scan . --format ALL
 
 dast:
@@ -62,19 +68,5 @@ dast:
     expire_in: 1 week
 
 deploy:
-  stage: deploy
-  script:
-    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $DOCKER_REGISTRY
-    - docker push $DOCKER_REGISTRY/$IMAGE_NAME:$CI_PIPELINE_ID
-
-monitor:
-  stage: monitor
-  script:
-    - |
-      curl -X POST -H "Content-Type: application/json" -d '{
-        "name": "Loki",
-        "type": "loki",
-        "url": "'"$LOKI_URL"'",
-        "access": "proxy"
-      }' http://"$GRAFANA_USER":"$GRAFANA_PASSWORD"@"$GRAFANA_URL"/api/datasources || echo "Falha ao configurar Loki no Grafana"
+  stage: dep
 
