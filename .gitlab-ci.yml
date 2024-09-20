@@ -27,19 +27,19 @@ build:
 test:
   stage: test
   script:
-    - pytest todo_project/tests
+    - pytest todo/tests
 
 lint:
   stage: lint
   script:
-    - pip install flake8 isort  # Instalar ferramentas de lint
+    - pip3 install flake8 isort  # Instalar ferramentas de lint
     - flake8 .  # Executar flake8
     - isort . --check-only  # Verificar importações
 
 security:
   stage: security
   script:
-    - pip install bandit  # Instalar Bandit
+    - pip3 install bandit  # Instalar Bandit
     - bandit -r . -f json -o bandit_report.json  # Executar Bandit
 
 dast:
