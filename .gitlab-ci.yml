@@ -41,7 +41,7 @@ security:
 
 dast:
   stage: dast
-  image: zaproxy/zap-stable:2.15.0
+  image: docker:latest
   services:
     - name: docker:dind
       command: ["--host=unix:///var/run/docker.sock"]
@@ -57,6 +57,12 @@ dast:
     paths:
       - zap_report.html
     expire_in: 1 week
+
+deploy:
+  stage: deploy
+  script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $DOCKER_REGISTRY
+    - docker push $DOCKER_REGISTRY/$IMAGE_NAME:$CI_PIPELINE_ID
 
 monitor:
   stage: monitor
