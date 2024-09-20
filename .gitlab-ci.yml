@@ -48,10 +48,14 @@ dast:
   image: docker:latest
   services:
     - docker:dind
+  variables:
+    DOCKER_HOST: tcp://docker:2375/
+    DOCKER_TLS_CERTDIR: ""
   script:
     - docker run -d --name my-app -p 5000:5000 $DOCKER_REGISTRY/$IMAGE_NAME:$CI_PIPELINE_ID
     - docker run -d --name zap -p 8080:8080 owasp/zap2docker-stable zap.sh -daemon -host 0.0.0.0 -port 8080
-    - sleep 30
+    - echo "Aguardando o ZAP inicializar..."
+    - sleep 60  # Aumentar o tempo de espera para garantir que o ZAP esteja pronto
     - docker exec zap zap-cli quick-scan -t http://localhost:5000 -r zap_report.html || true
   artifacts:
     paths:
@@ -73,4 +77,4 @@ monitor:
         "type": "loki",
         "url": "'"$LOKI_URL"'",
         "access": "proxy"
-      }' http://"$GRAFANA_USER":"$GRAFANA_PASSWORD"@"$GRAFANA_URL"/api/datasources || true
+      }' http://"$GRAFANA_USER":"$GRAFANA_PASSWORD"@"$GRAFANA_URL"/api/datasources || echo "Falha ao configurar Loki no Grafana"
