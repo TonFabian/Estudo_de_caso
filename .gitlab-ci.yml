@@ -27,7 +27,7 @@ build:
 test:
   stage: test
   script:
-    - pytest  # Executar testes
+    - pytest todo_project/tests
 
 lint:
   stage: lint
