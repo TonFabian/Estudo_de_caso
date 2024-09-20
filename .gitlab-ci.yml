@@ -1,4 +1,4 @@
-image: python:3.9-slim  # A imagem base para o job
+image: python:3.9-slim-buster  # Imagem base minimalista
 
 stages:
   - build
@@ -9,18 +9,16 @@ stages:
   - monitor
 
 variables:
-  GRAFANA_URL: http://localhost:3100
-  GRAFANA_USER: admin
-  GRAFANA_PASSWORD: admin
-  LOKI_URL: http://localhost:3100
+  # Credenciais devem ser armazenadas em um gerenciador de segredos
 
 before_script:
-  - pip install --no-cache-dir -r requirements.txt  # Instalar dependências antes de cada job
+  - pip install --cache-dir /tmp/pip_cache -r requirements.txt  # Instalação única de dependências
 
 build:
   stage: build
   script:
-    - echo "Build stage: no specific build steps needed for Python"  # Comando de placeholder
+    # Comandos de build específicos para seu projeto Python (se necessário)
+    - echo "Build stage: Executando processos de build..."
 
 test:
   stage: test
@@ -43,7 +41,7 @@ security:
 dast:
   stage: dast
   script:
-    - docker run -d --name my-app -p 5000:5000 python:3.9-slim  # Iniciar aplicação Flask
+    - docker run -d --name my-app -p 5000:5000 python:3.9-slim-buster  # Iniciar aplicação Flask
     - docker run -d --name zap -p 8080:8080 owasp/zap2docker-stable zap.sh -daemon -host 0.0.0.0 -port 8080
     - echo "Aguardando o ZAP inicializar..."
     - sleep 60  # Aguardar a inicialização completa do ZAP
@@ -63,4 +61,3 @@ monitor:
         "url": "'"$LOKI_URL"'",
         "access": "proxy"
       }' http://"$GRAFANA_USER":"$GRAFANA_PASSWORD"@"$GRAFANA_URL"/api/datasources || echo "Falha ao configurar Loki no Grafana"
-
