@@ -6,7 +6,6 @@ stages:
   - lint
   - security
   - dast
-  - monitor
 
 variables:
   # Credenciais devem ser armazenadas em um gerenciador de segredos
@@ -17,7 +16,6 @@ before_script:
 build:
   stage: build
   script:
-    # Comandos de build específicos para seu projeto Python (se necessário)
     - echo "Build stage: Executando processos de build..."
 
 test:
@@ -51,13 +49,5 @@ dast:
       - zap_report.html  # Salvar o relatório como artefato
     expire_in: 1 week
 
-monitor:
-  stage: monitor
-  script:
-    - |
-      curl -X POST -H "Content-Type: application/json" -d '{
-        "name": "Loki",
-        "type": "loki",
-        "url": "'"$LOKI_URL"'",
-        "access": "proxy"
-      }' http://"$GRAFANA_USER":"$GRAFANA_PASSWORD"@"$GRAFANA_URL"/api/datasources || echo "Falha ao configurar Loki no Grafana"
+
+
