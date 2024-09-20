@@ -1,21 +1,14 @@
-FROM python:3.9.20-slim
-
-# Define o diretório de trabalho
+FROM python:3.9-slim-buster
 WORKDIR /app
+COPY requirements.txt .
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt && \
+    pip cache purge && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
-# Copia os arquivos do projeto para o contêiner
 COPY . .
 
-# Instala as dependências do projeto
-RUN pip install --no-cache-dir -r requirements.txt && \
-    pip cache purge
-
-# Expõe a porta 5000 para acesso à aplicação
+ENV FLASK_APP=todo_project/run.py
 EXPOSE 5000
-
-# Define a variável de ambiente para o Flask
-ENV FLASK_APP=run.py
-
-# Comando para iniciar a aplicação Flask
 CMD ["flask", "run", "--host=0.0.0.0"]
-
