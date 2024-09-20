@@ -10,7 +10,7 @@ stages:
   - monitor
 
 variables:
-  DOCKER_REGISTRY: registry.gitlab.com/zaunior/HackersdoBem
+  DOCKER_REGISTRY: docker:latest
   IMAGE_NAME: my-app
   GRAFANA_URL: http://localhost:3100
   GRAFANA_USER: admin
