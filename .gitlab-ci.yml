@@ -3,11 +3,18 @@ image: python:3.9-slim-buster
 variables:
   BASE_URL: "http://127.0.0.1:5000"  # URL da sua aplicação Flask em desenvolvimento
   ENVIRONMENT: "development"           # Indica que está em desenvolvimento
+  GRAFANA_URL: "http://grafana:3000"  # URL do Grafana (ajuste conforme necessário)
+  LOKI_URL: "http://loki:3100"         # URL do Loki (ajuste conforme necessário)
+  GRAFANA_USER: "admin"                 # Nome de usuário do Grafana (ajuste conforme necessário)
+  GRAFANA_PASSWORD: "admin"             # Senha do Grafana (ajuste conforme necessário)
 
 stages:
   - build
   - test
   - lint
+  - security
+  - dast
+  - monitor
 
 before_script:
   - pip install --cache-dir /tmp/pip_cache -r requirements.txt
@@ -15,7 +22,7 @@ before_script:
 build:
   stage: build
   script:
-    - echo "Build stage: Executando processos de build..."
+    - echo "Build stage  Executando processos de build..."
 
 test:
   stage: test
@@ -28,4 +35,35 @@ lint:
     - pip install flake8 isort  # Instalar ferramentas de lint
     - flake8 .  # Executar flake8
     - isort . --check-only  # Verificar importações
+
+security:
+  stage: security
+  script:
+    - pip install bandit  # Instalar Bandit
+    - bandit -r . -f json -o bandit_report.json  # Executar Bandit
+
+dast:
+  stage: dast
+  script:
+    - docker run -d --name my-app -p 5000:5000 python:3.9-slim-buster  # Iniciar aplicação Flask
+    - docker run -d --name zap -p 8080:8080 owasp/zap2docker-stable zap.sh -daemon -host 0.0.0.0 -port 8080
+    - echo "Aguardando o ZAP inicializar..."
+    - sleep 60  # Aguardar a inicialização completa do ZAP
+    - docker exec zap zap-cli quick-scan -t http://localhost:5000 -r zap_report.html || true  # Executar o scan de segurança
+  artifacts:
+    paths:
+      - zap_report.html  # Salvar o relatório como artefato
+    expire_in: 1 week
+
+monitor:
+  stage: monitor
+  script:
+    - |
+      curl -X POST -H "Content-Type: application/json" -d '{
+        "name": "Loki",
+        "type": "loki",
+        "url": "'"$LOKI_URL"'",
+        "access": "proxy"
+      }' "http://$GRAFANA_USER:$GRAFANA_PASSWORD@$GRAFANA_URL/api/datasources" || echo "Falha ao configurar Loki no Grafana"
+
 
