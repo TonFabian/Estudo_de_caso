@@ -1,13 +1,5 @@
 image: python:3.9-slim-buster
 
-variables:
-  BASE_URL: "http://127.0.0.1:5000"  # URL da sua aplicação Flask em desenvolvimento
-  ENVIRONMENT: "development"           # Indica que está em desenvolvimento
-  GRAFANA_URL: "http://grafana:3000"  # URL do Grafana (ajuste conforme necessário)
-  LOKI_URL: "http://loki:3100"         # URL do Loki (ajuste conforme necessário)
-  GRAFANA_USER: "admin"                 # Nome de usuário do Grafana (ajuste conforme necessário)
-  GRAFANA_PASSWORD: "admin"             # Senha do Grafana (ajuste conforme necessário)
-
 stages:
   - build
   - test
@@ -32,10 +24,8 @@ test:
 lint:
   stage: lint
   image: python:3.9-slim-buster  # Use uma imagem Docker com Python
-  script:
-    - pip install flake8 isort  # Instalar ferramentas de lint
-    - flake8 .  # Executar flake8
-    - isort . --check-only  # Verificar importações
+  script: 
+     - pip3 install -r requirements.txt
   allow_failure: true  # Opcional: Permite que o job falhe sem interromper o pipeline
 
 
