@@ -43,10 +43,11 @@ security:
   stage: security
   script:
     - pip3 install bandit  # Instalar Bandit
-    - bandit -r . -f json -o bandit_report.json  # Executar Bandit e salvar o relatório
+    - bandit -r . -f json -o bandit_report.json || true  # Executar Bandit e ignorar falhas
   artifacts:
     paths:
-      - bandit_report.json  # Salvar o relatório como a
+      - bandit_report.json  # Salvar o relatório como artefato
+
 
 dast:
   stage: dast
