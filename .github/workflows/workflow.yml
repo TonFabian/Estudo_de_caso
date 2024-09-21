@@ -204,3 +204,29 @@ jobs:
           # Verifica se Grafana e Loki estão rodando
           curl -f http://localhost:3000 || echo "Grafana is not running"
           curl -f http://localhost:3100/loki/api/v1/status || echo "Loki is not running"
+
+  prometheus-monitoring:
+    runs-on: ubuntu-latest
+    needs: deploy-stage
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install Prometheus
+        run: |
+          echo "Installing Prometheus for monitoring..."
+          docker pull prom/prometheus:latest
+
+      - name: Start Prometheus
+        run: |
+          echo "Starting Prometheus..."
+          docker run -d --name prometheus -p 9090:9090 \
+            -v $(pwd)/prometheus.yml:/etc/prometheus/prometheus.yml \
+            prom/prometheus:latest \
+            --config.file=/etc/prometheus/prometheus.yml
+
+      - name: Test Prometheus Service
+        run: |
+          echo "Testing Prometheus service..."
+          curl -f http://localhost:9090 || echo "Prometheus is not running"

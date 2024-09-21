@@ -1,7 +1,0 @@
-# install4j response file for Zed Attack Proxy 2.15.0
-installationType$Integer=0
-sys.adminRights$Boolean=true
-sys.adminRightsUiRootUnix$Boolean=true
-sys.installationDir=/opt/zaproxy
-sys.languageId=pt
-sys.symlinkDir=/usr/local/bin

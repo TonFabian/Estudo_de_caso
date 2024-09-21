@@ -21,10 +21,11 @@ WORKDIR /app
 COPY --from=builder /app .
 
 # Define as variáveis de ambiente
-ENV FLASK_APP=todo_project/run.py
+ENV FLASK_APP=todo/run.py
 ENV FLASK_RUN_HOST=0.0.0.0
-ENV FLASK_ENV=development  # Para ativar o modo de desenvolvimento
+ENV FLASK_ENV=development
 
+# Expondo a porta
 EXPOSE 5000
 
 # Comando para iniciar a aplicação Flask

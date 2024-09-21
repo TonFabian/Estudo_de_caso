@@ -1,6 +1,0 @@
-#!/usr/bin/env xdg-open
-[Desktop Entry]
-Type=Application
-Name=ZAP
-Exec="/opt/zaproxy/zap.sh" %U
-Categories=Application;
