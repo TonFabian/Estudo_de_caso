@@ -1,4 +1,4 @@
-name: Build, Static Code Analysis, and Security Scan Pipeline
+name: Build, Static Code Analysis, Security Scan, and Dependency Analysis Pipeline
 
 on:
   push:
@@ -76,10 +76,32 @@ jobs:
       - name: Run Bandit Security Scan
         run: |
           echo "Running Bandit security scan..."
-          bandit -r todo/ -f json -o bandit_report.json || true
+          bandit -r todo_project/ -f json -o bandit_report.json || true
 
       - name: Upload Bandit Report
         uses: actions/upload-artifact@v3
         with:
           name: bandit-report
           path: bandit_report.json
+
+  dependency-check:
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Run OWASP Dependency-Check
+        run: |
+          echo "Running OWASP Dependency-Check..."
+          docker run --rm \
+            -v $(pwd):/zap/wrk \
+            zaproxy/zap-stable:2.15.0 \
+            bash -c "dependency-check --scan /zap/wrk --format ALL --out /zap/wrk/dependency-check-report" || true
+
+      - name: Upload Dependency-Check Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: dependency-check-report
+          path: ./dependency-check-report/
