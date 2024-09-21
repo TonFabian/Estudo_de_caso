@@ -1,26 +1,44 @@
 name: Continuous Integration
 
-on: pull_request
+on:
+  push:
+    branches: ["*"]
 
 jobs:
-  continuous-integration:
-    runs-on: ubuntu-latest  # Alterado para um ambiente adequado
-
+  build:
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: 16
+
+      - name: Install Node.js dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm run test
+
+      - name: Build application
+        run: npm run build
+
+      - name: Deploy application
+        run: npm run deploy
+
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: '3.9'
+          python-version: "3.9"
 
-      - name: Install dependencies
-        run: |
-          pip install -r requirements.txt
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
 
       - name: Build
-        run: echo "Build stage: Executando processos de build..."
+        run: |
+          echo "Build stage: Executando processos de build..."
 
       - name: Test
         run: pytest todo/tests
