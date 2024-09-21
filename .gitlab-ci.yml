@@ -29,18 +29,24 @@ test:
   script:
     - pytest todo/tests
 
-# lint:
-#   stage: lint
-#   script:
-#     - pip3 install flake8 isort  # Instalar ferramentas de lint
-#     - flake8 .  # Executar flake8
-#     - isort . --check-only  # Verificar importações
+lint:
+  stage: lint
+  image: python:3.9-slim-buster  # Use uma imagem Docker com Python
+  script:
+    - pip install flake8 isort  # Instalar ferramentas de lint
+    - flake8 .  # Executar flake8
+    - isort . --check-only  # Verificar importações
+  allow_failure: true  # Opcional: Permite que o job falhe sem interromper o pipeline
+
 
 security:
   stage: security
   script:
     - pip3 install bandit  # Instalar Bandit
-    - bandit -r . -f json -o bandit_report.json  # Executar Bandit
+    - bandit -r . -f json -o bandit_report.json  # Executar Bandit e salvar o relatório
+  artifacts:
+    paths:
+      - bandit_report.json  # Salvar o relatório como a
 
 dast:
   stage: dast
