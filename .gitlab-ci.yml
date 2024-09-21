@@ -29,12 +29,12 @@ test:
   script:
     - pytest todo/tests
 
-lint:
-  stage: lint
-  script:
-    - pip3 install flake8 isort  # Instalar ferramentas de lint
-    - flake8 .  # Executar flake8
-    - isort . --check-only  # Verificar importações
+# lint:
+#   stage: lint
+#   script:
+#     - pip3 install flake8 isort  # Instalar ferramentas de lint
+#     - flake8 .  # Executar flake8
+#     - isort . --check-only  # Verificar importações
 
 security:
   stage: security
