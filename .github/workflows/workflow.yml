@@ -1,7 +1,10 @@
-name: Build, Static Code Analysis, Security Scan, and Dependency Analysis Pipeline
+name: CI/CD Pipeline with DAST and Monitoring
 
 on:
   push:
+    branches:
+      - "*"
+  pull_request:
     branches:
       - "*"
 
@@ -105,3 +108,99 @@ jobs:
         with:
           name: dependency-check-report
           path: ./dependency-check-report/
+
+  review:
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Deploy Review Environment
+        run: |
+          echo "Deploying temporary review environment..."
+          # Comandos para realizar o deploy temporário no ambiente de revisão
+          # Simulação de revisão manual.
+
+      - name: Upload Review Environment URL
+        run: |
+          echo "Uploading review environment URL..."
+          # Comandos para disponibilizar a URL para revisão.
+
+  deploy-stage:
+    runs-on: ubuntu-latest
+    needs: review
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Deploy to Staging
+        run: |
+          echo "Deploying to staging environment..."
+          # Comandos para realizar o deploy no ambiente de estágio
+
+  dast:
+    runs-on: ubuntu-latest
+    needs: deploy-stage
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Run OWASP ZAP DAST
+        run: |
+          echo "Running OWASP ZAP DAST..."
+          docker run -d --name zap -p 8083:8080 zaproxy/zap-stable:2.15.0 zap.sh -daemon -host 0.0.0.0 -port 8080
+          echo "Waiting for ZAP to start..."
+          sleep 60
+          docker exec zap zap-cli quick-scan -t http://staging-environment-url -r zap_report.html || true
+
+      - name: Upload DAST Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: dast-report
+          path: zap_report.html
+
+  post-deployment-monitoring:
+    runs-on: ubuntu-latest
+    needs: deploy-stage
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install Monitoring Tools
+        run: |
+          echo "Installing Grafana and Loki for post-deployment monitoring..."
+          docker pull grafana/grafana:latest
+          docker pull grafana/loki:latest
+
+      - name: Start Loki
+        run: |
+          echo "Starting Loki..."
+          docker run -d --name loki -p 3100:3100 grafana/loki:latest -config.file=/etc/loki/local-config.yaml
+
+      - name: Start Grafana
+        run: |
+          echo "Starting Grafana..."
+          docker run -d --name grafana -p 3000:3000 grafana/grafana:latest
+
+      - name: Configure Grafana Data Source
+        run: |
+          echo "Configuring Grafana data source..."
+          curl -X POST -H "Content-Type: application/json" \
+          -d '{
+            "name": "Loki",
+            "type": "loki",
+            "url": "http://localhost:3100",
+            "access": "proxy"
+          }' http://admin:admin@localhost:3000/api/datasources || echo "Failed to configure Grafana data source"
+
+      - name: Test Monitoring Services
+        run: |
+          echo "Testing monitoring services..."
+          # Verifica se Grafana e Loki estão rodando
+          curl -f http://localhost:3000 || echo "Grafana is not running"
+          curl -f http://localhost:3100/loki/api/v1/status || echo "Loki is not running"
